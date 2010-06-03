@@ -10,9 +10,11 @@ The WretchWebParser is used to parse the content HTML of wretch.cc
 class WretchWebParser(HTMLParser):
   """ HTML page filter to get photo information
   """
-  def __init__(self):
+  def __init__(self, userid='neoplayer'):
     HTMLParser.__init__(self)
     self.photo_url_list = []
+    self.userid = userid
+    print 'User %s'%(userid)
 
   def reset(self):
     # new style not suitable here?  super(PhotoWebParser, self).reset()
@@ -20,14 +22,13 @@ class WretchWebParser(HTMLParser):
     self.photo_url_list = []
 
   def handle_starttag(self, tag, attrs):
-    print "tag %s"%(tag)
-    if tag == 'img':
-      for k,v in attrs:
-        print "(%s->%s)"%(k,v)
+    if tag == 'a':
+      href = [v for k, v in attrs if k == 'href']
+      print href
 
   def handle_data(self, data):
-    #print "meet data %s"%(data)
-    pass
+    print "meet data %s"%(data)
+    #pass
 
 '''
 The PbaseWebParser is used to parse the content HTML of pbase.com
@@ -36,7 +37,7 @@ class PbaseWebParser(HTMLParser):
   """ HTML page filter to get photo information
   """
   def __init__(self):
-    HTMLParser.__init__(self)
+    HTMLarser.__init__(self)
     self.photo_url_list = []
     self.img_src_list = []
     self.found_end_node = 0
@@ -113,6 +114,9 @@ if __name__ == '__main__':
     # 1. add the site name in the following sites tuple
     # 2. adds code to prepare for the query for that site
     # 3. site names in sites tuple can not have duplicates
+    # 4. Usage example:
+    #    python fetch_pic.py http://www.wretch.cc/album winnielin 2
+    #    python fetch_pic.py http://www.pbase.com/frank_1112
     sites = ('wretch', 'pbase')
     for site in sites:
       ret = re.search(site, inpurl)
@@ -122,7 +126,7 @@ if __name__ == '__main__':
         inp_dict = {}
         inp_dict[name_id] = book_id
         inp_data = urllib.urlencode(inp_dict)
-        webparser = WretchWebParser()
+        webparser = WretchWebParser(name_id)
         res = build_url(inpurl, inp_data)
         if res != None:
           html = res.read()
