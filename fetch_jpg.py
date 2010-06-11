@@ -3,6 +3,7 @@ import sys
 import urllib
 import urllib2
 from HTMLParser import HTMLParser
+import re
 
 '''
 The WretchWebParser is used to parse the content HTML of wretch.cc
@@ -23,12 +24,11 @@ class WretchWebParser(HTMLParser):
 
   def handle_starttag(self, tag, attrs):
     if tag == 'a':
-      href = [v for k, v in attrs if k == 'href']
-      print href
-
-  def handle_data(self, data):
-    print "meet data %s"%(data)
-    #pass
+      href_link = [v for k, v in attrs if k == 'href']
+      for link in href_link:
+        match_obj = re.search('show', link)
+        if match_obj != None:
+          print href_link
 
 '''
 The PbaseWebParser is used to parse the content HTML of pbase.com
@@ -72,14 +72,16 @@ class PbaseWebParser(HTMLParser):
 
 def build_url(url_link, enc_data=None):
   try:
-    request = urllib2.Request(url_link, enc_data)
+    print url_link
+    print enc_data
+    request = urllib2.Request(url_link + '?' + enc_data)
     request.add_header('Referer', 'http://www.wretch.cc')
     request.add_header('User-Agent', 'Mozilla 5.0')
     response = urllib2.urlopen(request)
   except urllib2.URLError:
-    print "The %s is not valid URL\n"%(url_link)
+    print "URL error %s\n"%(url_link)
   except ValueError:
-    print "The %s is not valid URL\n"%(url_link)
+    print "Value error %s\n"%(url_link)
   else:
     return response
   return None
@@ -104,7 +106,6 @@ if __name__ == '__main__':
   if len(sys.argv) < 2:
     print "Usage: python fetch_jpg.py YOUR_URL"
   else:
-    import re
     inp_dict = None
     inp_data = None
     inpurl = sys.argv[1]
@@ -121,17 +122,21 @@ if __name__ == '__main__':
     for site in sites:
       ret = re.search(site, inpurl)
       if ret != None and site == 'wretch':
-        name_id = sys.argv[2]
-        book_id = sys.argv[3]
+        name = sys.argv[2]
+        book = sys.argv[3]
         inp_dict = {}
-        inp_dict[name_id] = book_id
+        inp_dict['id'] = name
+        inp_dict['book'] = book
         inp_data = urllib.urlencode(inp_dict)
-        webparser = WretchWebParser(name_id)
         res = build_url(inpurl, inp_data)
+        webparser = WretchWebParser(name)
         if res != None:
           html = res.read()
           if webparser != None:
-            webparser.feed(html)
+            try:
+              webparser.feed(html)
+            except:
+              print "HTML parser exception"
             print webparser.photo_url_list
           else:
             print "No parser for %s"%(inpurl)
